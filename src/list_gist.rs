@@ -46,6 +46,22 @@ pub fn write_file(path: &Path, s: String) -> Result<()> {
     Ok(())
 }
 
+pub fn read_file(path: &Path) -> Result<String> {
+    let mut file: File = File::open(path).chain_err(|| "can't open file")?;
+    let mut buf = String::new();
+    file.read_to_string(&mut buf)
+        .chain_err(|| "can't read file")?;
+    Ok(buf)
+}
+
+pub fn get_name_file(path: &Path) -> Result<String>{
+    if path.is_file(){
+        Ok(path.file_name().unwrap().to_str().unwrap().to_owned())
+    }else{
+        Err(Error::from("invalid file path"))
+    }
+}
+
 pub fn sync_list() -> Result<String> {
     let mut resp: Response = Client::new()
         .get(URL)

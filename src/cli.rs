@@ -10,16 +10,17 @@ pub enum Mod {
 }
 #[derive(Default, Debug)]
 pub struct Config {
-    list: bool,
-    verbose: bool,
-    sync: bool,
-    public: bool,
-    rmod: Option<Mod>,
-    login: Option<String>,
-    id: Option<String>,
-    url: Option<String>,
-    desc: Option<String>,
-    path: Option<String>,
+    pub list: bool,
+    pub verbose: bool,
+    pub sync: bool,
+    pub public: bool,
+    pub rmod: Option<Mod>,
+    pub login: Option<String>,
+    pub id: Option<String>,
+    pub url: Option<String>,
+    pub desc: Option<String>,
+    pub path: Option<String>,
+    pub name: Option<String>,
 }
 
 pub fn get_config() -> Config {
@@ -52,7 +53,7 @@ pub fn get_config() -> Config {
                 Arg::with_name("url")
                     .short("u")
                     .long("url")
-                    .value_name("URL")
+                    .value_name("RAW URL")
                     .help("Sets a url gist ")
                     .takes_value(true),
                 Arg::with_name("id")
@@ -88,17 +89,41 @@ pub fn get_config() -> Config {
                     .long("public")
                     .help("Sets a gist url")
                     .takes_value(false),
+                Arg::with_name("name")
+                    .short("n")
+                    .long("name")
+                    .value_name("NAME FILE")
+                    .help("name file gist")
+                    .takes_value(true),
             ]),
         )
         .subcommand(
-            SubCommand::with_name("update").about("update gist").arg(
-                Arg::with_name("read")
+            SubCommand::with_name("update").about("update gist").args(&[
+                Arg::with_name("url")
                     .short("u")
                     .long("url")
                     .value_name("URL")
                     .help("Sets a gist url")
                     .takes_value(true),
-            ),
+                Arg::with_name("path")
+                    .short("p")
+                    .long("path")
+                    .value_name("PATH")
+                    .help("upload gist")
+                    .takes_value(true),
+                Arg::with_name("desc")
+                    .short("d")
+                    .long("desc")
+                    .value_name("DESCRIPTION")
+                    .help("description gist")
+                    .takes_value(true),
+                Arg::with_name("name")
+                    .short("n")
+                    .long("name")
+                    .value_name("NAME FILE")
+                    .help("name file gist")
+                    .takes_value(true),
+            ]),
         )
         .subcommand(
             SubCommand::with_name("delete").about("delete gist").args(&[
@@ -112,12 +137,6 @@ pub fn get_config() -> Config {
                     .short("i")
                     .long("id")
                     .value_name("ID")
-                    .help("Sets a ID gist ")
-                    .takes_value(true),
-                Arg::with_name("desc")
-                    .short("d")
-                    .long("desc")
-                    .value_name("description gist")
                     .help("Sets a ID gist ")
                     .takes_value(true),
             ]),
@@ -151,6 +170,9 @@ pub fn get_config() -> Config {
         if let Some(d) = m.value_of("desc") {
             config.desc = Some(d.to_owned());
         }
+        if let Some(n) = m.value_of("name") {
+            config.name = Some(n.to_owned());
+        }
     } else if let Some(m) = matches.subcommand_matches("update") {
         config.rmod = Some(Mod::Update);
         config.public = m.is_present("public");
@@ -166,12 +188,13 @@ pub fn get_config() -> Config {
         if let Some(p) = m.value_of("path") {
             config.path = Some(p.to_owned());
         }
+        if let Some(n) = m.value_of("name") {
+            config.name = Some(n.to_owned());
+        }
     } else if let Some(m) = matches.subcommand_matches("delete") {
         config.rmod = Some(Mod::Del);
         if let Some(i) = m.value_of("id") {
             config.id = Some(i.to_owned());
-        } else if let Some(d) = m.value_of("desc") {
-            config.desc = Some(d.to_owned());
         } else if let Some(u) = m.value_of("url") {
             config.url = Some(u.to_owned());
         }

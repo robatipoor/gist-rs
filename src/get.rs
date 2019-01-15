@@ -3,9 +3,9 @@ use crate::errors::*;
 use reqwest::{Client, Response};
 use std::io::Read;
 
-pub fn get_gist(url: String) -> Result<String> {
+pub fn get_gist(url: &str) -> Result<String> {
     let mut resp: Response = Client::new()
-        .get(&url)
+        .get(url)
         .bearer_auth(TOKEN.clone())
         .send()
         .chain_err(|| "can't get list")?;
