@@ -1,6 +1,7 @@
 use super::errors::*;
 use super::token::TOKEN;
 use super::url::URL;
+use colored::*;
 use reqwest::{Client, Response};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -54,10 +55,10 @@ pub fn read_file(path: &Path) -> Result<String> {
     Ok(buf)
 }
 
-pub fn get_name_file(path: &Path) -> Result<String>{
-    if path.is_file(){
+pub fn get_name_file(path: &Path) -> Result<String> {
+    if path.is_file() {
         Ok(path.file_name().unwrap().to_str().unwrap().to_owned())
-    }else{
+    } else {
         Err(Error::from("invalid file path"))
     }
 }
@@ -77,17 +78,21 @@ pub fn sync_list() -> Result<String> {
 }
 
 pub fn print_list(gists: Vec<ResponseListGist>, verbose: bool) -> Result<()> {
+    let mut count = 0;
     for gist in gists {
         println!(
-            "{} {}",
+            "{}) {}",
+            count,
             gist.description.unwrap_or("None".to_owned()),
-            gist.id
         );
+        println!("{}", gist.id.blue().bold());
         if verbose {
             for (_, v) in gist.files {
-                println!("{}", v.raw_url);
+                println!("{}", v.raw_url.green());
+                println!("---------------------------------------------------------");
             }
         }
+        count += 1;
     }
     Ok(())
 }

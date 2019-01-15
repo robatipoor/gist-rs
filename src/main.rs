@@ -36,6 +36,7 @@ fn main() {
     }
     if config.sync {
         write_file(&path_gist_file().unwrap(), sync_list().unwrap()).unwrap();
+        println!("sync gist list successfully !");
         return;
     }
     if let Some(m) = config.rmod {
@@ -54,7 +55,7 @@ fn main() {
             }
             Mod::Del => {
                 if let Some(u) = config.url {
-                    delete::delete_gist(&u).unwrap();
+                    delete::delete_gist(&convert_url(&path_gist, &u).unwrap()).unwrap();
                 } else if let Some(i) = config.id {
                     delete::delete_gist(&search_url(&path_gist, &i).unwrap()).unwrap();
                 } else {
@@ -65,7 +66,7 @@ fn main() {
             Mod::Post => {
                 if let Some(p) = config.path {
                     let p = Path::new(&p);
-                    let res = post::GistPost::new(
+                    let _res = post::GistPost::new(
                         read_file(&p).unwrap(),
                         config.public,
                         config.desc.unwrap_or("".to_owned()),
@@ -73,12 +74,12 @@ fn main() {
                     )
                     .post()
                     .unwrap();
-                    println!("{:?}", res)
+                    println!("post gist successfully !");
                 } else {
                     let mut i = std::io::stdin();
                     let mut buf = String::new();
                     i.read_to_string(&mut buf).expect("failed read stdin");
-                    let res = post::GistPost::new(
+                    let _res = post::GistPost::new(
                         buf,
                         config.public,
                         config.desc.unwrap_or("".to_owned()),
@@ -86,26 +87,39 @@ fn main() {
                     )
                     .post()
                     .unwrap();
-                    println!("{:?}", res)
+                    println!("post gist successfully!");
                 }
             }
             Mod::Update => {
                 if let Some(p) = config.path {
-                    if let Some(u) = config.url {
+                    if let Some(i) = config.id {
                         let p = Path::new(&p);
                         let name = config.name.unwrap_or(get_name_file(&p).unwrap());
-                        let res = update::GistUpdate::new(
+                        let _res = update::GistUpdate::new(
                             read_file(p).unwrap(),
                             config.desc.unwrap_or("".to_owned()),
-                            name.clone(), // TODO FIX old name file
+                            get_name_file_from_id(&path_gist, &i).unwrap(), // TODO FIX old name file
                             Some(name),
                         )
-                        .update(&u)
+                        .update(&search_url(&path_gist, &i).unwrap())
                         .unwrap();
-                        println!("{:?}", res)
+                        println!("update gist successfully !");
+                    } else if let Some(u) = config.url {
+                        let p = Path::new(&p);
+                        let _res = update::GistUpdate::new(
+                            read_file(p).unwrap(),
+                            config.desc.unwrap_or("".to_owned()),
+                            get_name_file_from_url(&path_gist, &u).unwrap(), // TODO FIX old name file
+                            Some(config.name.unwrap_or(get_name_file(&p).unwrap())),
+                        )
+                        .update(&convert_url(&path_gist, &u).unwrap())
+                        .unwrap();
+                        println!("update gist successfully !");
                     }
                 }
             }
         }
+    } else {
+        println!("{}", config.usage.unwrap())
     }
 }

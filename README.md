@@ -4,7 +4,7 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/d2we8j2c58n6wq7o?svg=true)](https://ci.appveyor.com/project/robatipoor/gist-rs)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-client tool for github gist
+client tool for gist.github.com [gist.github.com](https://gist.github.com)
 
 
 **install**
@@ -13,32 +13,34 @@ client tool for github gist
 cargo install gist-rs
 ```
 
-**Build and install**
-
-```sh
-# build and install gist-rs
-git clone https://github.com/robatipoor/gist-rs \
-&& cd gist-rs \
-&& make 
-```
-
 **Build dependency**
 
 git, rustc, cargo, gnu make, binutils, upx
 
+**Build and install**
+
+```sh
+# build and install gist-rs
+git clone https://github.com/robatipoor/gist-rs && cd gist-rs && make 
+```
+
 **run**
 
 ```sh
+# usage gist-rs
+gist-rs
 # login github gist
-gist-rs --login "token string"
+gist-rs --login 'token string'
 # sync list gist 
 gist-rs -s
 # list gist 
 gist-rs -l
 # sync and list gist 
 gist-rs -sl
+# verbose list gist 
+gist-rs -lv
 # post gist
-echo 'Hello !' | gist-rs
+echo 'Hello !' | gist-rs post
 # post gist
 gist-rs post -p file.txt
 # get file 

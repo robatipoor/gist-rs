@@ -31,3 +31,39 @@ pub fn search_raw_url(path: &Path, id: &str) -> Result<String> {
     }
     return Err(Error::from("gist not exist"));
 }
+
+pub fn convert_url(path: &Path, url: &str) -> Result<String> {
+    let gists = read_list_gists(path).chain_err(|| "can't read list gist")?;
+    for gist in gists {
+        for (_, v) in gist.files {
+            if v.raw_url == url {
+                return Ok(gist.url);
+            }
+        }
+    }
+    return Err(Error::from("url not exist"));
+}
+
+pub fn get_name_file_from_id(path: &Path, id: &str) -> Result<String> {
+    let gists = read_list_gists(path).chain_err(|| "can't read list gist")?;
+    for gist in gists {
+        if gist.id == id {
+            for (_, v) in gist.files {
+                return Ok(v.filename);
+            }
+        }
+    }
+    return Err(Error::from("id not exist"));
+}
+
+pub fn get_name_file_from_url(path: &Path, url: &str) -> Result<String> {
+    let gists = read_list_gists(path).chain_err(|| "can't read list gist")?;
+    for gist in gists {
+        for (_, v) in gist.files {
+            if v.raw_url == url {
+                return Ok(v.filename);
+            }
+        }
+    }
+    return Err(Error::from("url not exist"));
+}

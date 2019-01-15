@@ -21,6 +21,7 @@ pub struct Config {
     pub desc: Option<String>,
     pub path: Option<String>,
     pub name: Option<String>,
+    pub usage: Option<String>,
 }
 
 pub fn get_config() -> Config {
@@ -60,12 +61,6 @@ pub fn get_config() -> Config {
                     .short("i")
                     .long("id")
                     .value_name("ID")
-                    .help("Sets a ID gist ")
-                    .takes_value(true),
-                Arg::with_name("desc")
-                    .short("d")
-                    .long("desc")
-                    .value_name("description gist")
                     .help("Sets a ID gist ")
                     .takes_value(true),
             ]),
@@ -123,6 +118,12 @@ pub fn get_config() -> Config {
                     .value_name("NAME FILE")
                     .help("name file gist")
                     .takes_value(true),
+                Arg::with_name("id")
+                    .short("i")
+                    .long("id")
+                    .value_name("ID")
+                    .help("Sets a ID gist ")
+                    .takes_value(true),
             ]),
         )
         .subcommand(
@@ -156,8 +157,6 @@ pub fn get_config() -> Config {
         config.rmod = Some(Mod::Get);
         if let Some(i) = m.value_of("id") {
             config.id = Some(i.to_owned());
-        } else if let Some(d) = m.value_of("desc") {
-            config.desc = Some(d.to_owned());
         } else if let Some(u) = m.value_of("url") {
             config.url = Some(u.to_owned());
         }
@@ -199,6 +198,6 @@ pub fn get_config() -> Config {
             config.url = Some(u.to_owned());
         }
     }
-
+    config.usage = matches.usage;
     return config;
 }
