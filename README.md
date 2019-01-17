@@ -4,7 +4,8 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/d2we8j2c58n6wq7o?svg=true)](https://ci.appveyor.com/project/robatipoor/gist-rs)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-client tool for gist.github.com [gist.github.com](https://gist.github.com)
+# unstable lib work in progress
+client tool for [gist.github.com](https://gist.github.com)
 
 
 **install**
