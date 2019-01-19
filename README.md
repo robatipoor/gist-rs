@@ -1,10 +1,10 @@
+# unstable work in progress
 # gist-rs
 [![Crates.io](https://img.shields.io/crates/v/pf.svg?style=plastic)](http://crates.io/crates/gist-rs)
 [![Build Status](https://travis-ci.org/robatipoor/pf.svg?branch=master)](https://travis-ci.org/robatipoor/gist-rs)
 [![Build status](https://ci.appveyor.com/api/projects/status/d2we8j2c58n6wq7o?svg=true)](https://ci.appveyor.com/project/robatipoor/gist-rs)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-# unstable lib work in progress
 client tool for [gist.github.com](https://gist.github.com)
 
 
