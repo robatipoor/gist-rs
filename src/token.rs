@@ -1,28 +1,41 @@
+use crate::constants::*;
 use crate::errors::*;
+use crate::utils;
 use lazy_static::lazy_static;
 use std::fs::File;
 use std::io::prelude::*;
-use std::path::PathBuf;
 
 lazy_static! {
-    pub static ref TOKEN: String = read_token().expect("cant get token");
+    pub static ref TOKEN: String = Token::read().unwrap().get();
 }
 
-pub fn path_token() -> Option<PathBuf> {
-    dirs::home_dir().map(|p| p.join(".gist-rs"))
-}
+pub struct Token(String);
 
-pub fn read_token() -> Result<String> {
-    let mut file = File::open(path_token().unwrap()).chain_err(|| "can't open token file")?;
-    let mut contents = String::new();
-    file.read_to_string(&mut contents)
-        .chain_err(|| "can't read token file")?;
-    Ok(contents.trim().to_owned())
-}
+impl Token {
+    fn new(token: String) -> Token {
+        return Token(token);
+    }
 
-pub fn write_token(token: String) -> Result<()> {
-    let mut file = File::create(path_token().unwrap()).chain_err(|| "can't create token file")?;
-    file.write(token.as_bytes())
-        .chain_err(|| "can't write to token file")?;
-    Ok(())
+    pub fn get(&self) -> String {
+        return self.0.clone();
+    }
+
+    pub fn read() -> Result<Self> {
+        let path_file = utils::path_file_in_home(TOKEN_FILE_NAME).unwrap();
+        let mut file = File::open(path_file.as_path())
+            .chain_err(|| format!("failed open file {}", path_file.to_str().unwrap()))?;
+        let mut token = String::new();
+        file.read_to_string(&mut token)
+            .chain_err(|| format!("failed read file {}", path_file.to_str().unwrap()))?;
+        return Ok(Token::new(token));
+    }
+
+    pub fn write(token: String) -> Result<()> {
+        let path_file = utils::path_file_in_home(TOKEN_FILE_NAME).unwrap();
+        let mut file = File::create(path_file.as_path())
+            .chain_err(|| format!("failed create file {}", path_file.to_str().unwrap()))?;
+        file.write(token.as_bytes())
+            .chain_err(|| format!("failed write file {}", path_file.to_str().unwrap()))?;
+        Ok(())
+    }
 }

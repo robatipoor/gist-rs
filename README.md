@@ -41,7 +41,7 @@ gist-rs -sl
 # verbose list gist 
 gist-rs -lv
 # post gist
-echo 'Hello !' | gist-rs post
+echo 'Hello !' | gist-rs
 # post gist
 gist-rs post -p file.txt
 # get file 

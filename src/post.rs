@@ -1,6 +1,6 @@
 use crate::errors::*;
 use crate::token::TOKEN;
-use crate::url::URL;
+use crate::constants::*;
 use reqwest::{Client, Response};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -30,7 +30,7 @@ impl GistPost {
     pub fn post(&self) -> Result<GistPost> {
         let mut resp: Response = Client::new()
             .post(URL)
-            .bearer_auth(TOKEN.to_owned())
+            .bearer_auth(&*TOKEN)
             .json(self)
             .send()
             .chain_err(|| "post gist unsuccess !")?;

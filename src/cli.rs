@@ -4,12 +4,12 @@ use clap::{App, Arg, SubCommand};
 #[derive(Debug)]
 pub enum Mod {
     Get,
-    Post,
-    Del,
+    Create,
+    Delete,
     Update,
 }
 #[derive(Default, Debug)]
-pub struct Config {
+pub struct AppArgs {
     pub list: bool,
     pub verbose: bool,
     pub sync: bool,
@@ -24,7 +24,7 @@ pub struct Config {
     pub usage: Option<String>,
 }
 
-pub fn get_config() -> Config {
+pub fn get_args() -> Option<AppArgs> {
     let matches = App::new(crate_name!())
         .about(crate_description!())
         .version(crate_version!())
@@ -66,12 +66,12 @@ pub fn get_config() -> Config {
             ]),
         )
         .subcommand(
-            SubCommand::with_name("post").about("post gist").args(&[
+            SubCommand::with_name("create").about("create gist").args(&[
                 Arg::with_name("path")
                     .short("p")
                     .long("path")
                     .value_name("PATH")
-                    .help("upload gist")
+                    .help("create gist")
                     .takes_value(true),
                 Arg::with_name("desc")
                     .short("d")
@@ -144,60 +144,66 @@ pub fn get_config() -> Config {
         )
         .get_matches();
 
-    let mut config: Config = Config::default();
+    let mut app_args: AppArgs = AppArgs::default();
     if let Some(login) = matches.value_of("login") {
-        config.login = Some(login.to_owned());
-        return config;
+        app_args.login = Some(login.to_owned());
+        return Some(app_args);
     }
-    config.list = matches.is_present("list");
-    config.verbose = matches.is_present("verbose");
-    config.sync = matches.is_present("sync");
 
     if let Some(m) = matches.subcommand_matches("get") {
-        config.rmod = Some(Mod::Get);
+        app_args.rmod = Some(Mod::Get);
         if let Some(i) = m.value_of("id") {
-            config.id = Some(i.to_owned());
+            app_args.id = Some(i.to_owned());
         } else if let Some(u) = m.value_of("url") {
-            config.url = Some(u.to_owned());
+            app_args.url = Some(u.to_owned());
         }
-    } else if let Some(m) = matches.subcommand_matches("post") {
-        config.rmod = Some(Mod::Post);
-        config.public = m.is_present("public");
+    } else if let Some(m) = matches.subcommand_matches("create") {
+        app_args.rmod = Some(Mod::Create);
+        app_args.public = m.is_present("public");
         if let Some(p) = m.value_of("path") {
-            config.path = Some(p.to_owned());
+            app_args.path = Some(p.to_owned());
         }
         if let Some(d) = m.value_of("desc") {
-            config.desc = Some(d.to_owned());
+            app_args.desc = Some(d.to_owned());
         }
         if let Some(n) = m.value_of("name") {
-            config.name = Some(n.to_owned());
+            app_args.name = Some(n.to_owned());
         }
     } else if let Some(m) = matches.subcommand_matches("update") {
-        config.rmod = Some(Mod::Update);
-        config.public = m.is_present("public");
+        app_args.rmod = Some(Mod::Update);
+        app_args.public = m.is_present("public");
         if let Some(i) = m.value_of("id") {
-            config.id = Some(i.to_owned());
+            app_args.id = Some(i.to_owned());
         }
         if let Some(d) = m.value_of("desc") {
-            config.desc = Some(d.to_owned());
+            app_args.desc = Some(d.to_owned());
         }
         if let Some(u) = m.value_of("url") {
-            config.url = Some(u.to_owned());
+            app_args.url = Some(u.to_owned());
         }
         if let Some(p) = m.value_of("path") {
-            config.path = Some(p.to_owned());
+            app_args.path = Some(p.to_owned());
         }
         if let Some(n) = m.value_of("name") {
-            config.name = Some(n.to_owned());
+            app_args.name = Some(n.to_owned());
         }
     } else if let Some(m) = matches.subcommand_matches("delete") {
-        config.rmod = Some(Mod::Del);
+        app_args.rmod = Some(Mod::Delete);
         if let Some(i) = m.value_of("id") {
-            config.id = Some(i.to_owned());
+            app_args.id = Some(i.to_owned());
         } else if let Some(u) = m.value_of("url") {
-            config.url = Some(u.to_owned());
+            app_args.url = Some(u.to_owned());
+        }
+    } else {
+        if matches.is_present("list") {
+            app_args.list = true;
+            app_args.verbose = matches.is_present("verbose");
+        }
+        app_args.sync = matches.is_present("sync");
+        if !(app_args.list || app_args.sync) {
+            return None;
         }
     }
-    config.usage = matches.usage;
-    return config;
+    app_args.usage = matches.usage;
+    return Some(app_args);
 }

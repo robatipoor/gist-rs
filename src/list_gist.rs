@@ -1,98 +1,134 @@
-use super::errors::*;
-use super::token::TOKEN;
-use super::url::URL;
+use crate::constants::*;
+use crate::errors::*;
+use crate::token::*;
+use crate::utils;
 use colored::*;
 use reqwest::{Client, Response};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::prelude::{Read, Write};
-use std::path::{Path, PathBuf};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct ResponseListGist {
+struct ResponseGist {
+    #[serde(rename = "id")]
     pub id: String,
+    #[serde(rename = "url")]
     pub url: String,
-    pub description: Option<String>,
+    #[serde(rename = "description")]
+    pub desc: Option<String>,
+    #[serde(rename = "files")]
     pub files: HashMap<String, FileGist>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct FileGist {
-    pub filename: String,
-    pub r#type: Option<String>,
-    pub language: Option<String>,
+struct FileGist {
+    #[serde(rename = "filename")]
+    pub name: String,
+    #[serde(rename = "type")]
+    pub type_file: Option<String>,
+    #[serde(rename = "language")]
+    pub lang: Option<String>,
+    #[serde(rename = "raw_url")]
     pub raw_url: String,
+    #[serde(rename = "size")]
     pub size: u32,
 }
 
-pub fn path_gist_file() -> Option<PathBuf> {
-    dirs::home_dir().map(|p| p.join(".list-gist"))
+pub struct ListGist {
+    list: Vec<ResponseGist>,
 }
 
-pub fn read_list_gists(path: &Path) -> Result<Vec<ResponseListGist>> {
-    let mut file: File = File::open(path).chain_err(|| "gist file not found")?;
-    let mut out = String::new();
-    file.read_to_string(&mut out)
-        .chain_err(|| "can't read from gist file")?;
-    let gists: Vec<ResponseListGist> =
-        serde_json::from_str(&out).chain_err(|| "can't read from gist file")?;
-    return Ok(gists);
-}
-
-pub fn write_file(path: &Path, s: String) -> Result<()> {
-    let mut file: File = File::create(path).chain_err(|| "can't create file")?;
-    file.write_all(s.as_bytes())
-        .chain_err(|| "can't write file")?;
-    Ok(())
-}
-
-pub fn read_file(path: &Path) -> Result<String> {
-    let mut file: File = File::open(path).chain_err(|| "can't open file")?;
-    let mut buf = String::new();
-    file.read_to_string(&mut buf)
-        .chain_err(|| "can't read file")?;
-    Ok(buf)
-}
-
-pub fn get_name_file(path: &Path) -> Result<String> {
-    if path.is_file() {
-        Ok(path.file_name().unwrap().to_str().unwrap().to_owned())
-    } else {
-        Err(Error::from("invalid file path"))
+impl ListGist {
+    fn new(list: Vec<ResponseGist>) -> ListGist {
+        return ListGist { list };
     }
-}
 
-pub fn sync_list() -> Result<String> {
-    let mut resp: Response = Client::new()
-        .get(URL)
-        .bearer_auth(TOKEN.clone())
-        .send()
-        .chain_err(|| "can't get list")?;
-    if resp.status().is_success() {
-        let list_gist: Vec<ResponseListGist> = resp.json().chain_err(|| "can't read gist list")?;
-        let str_list = serde_json::to_string(&list_gist).chain_err(|| "can't get list")?;
-        return Ok(str_list);
+    pub fn read() -> Result<ListGist> {
+        let path_file = &utils::path_file_in_home(LIST_GIST_FILE_NAME).unwrap();
+        let out = utils::read_file(path_file).unwrap();
+        let gists: Vec<ResponseGist> = serde_json::from_str(&out)
+            .chain_err(|| format!("failed read file {}", path_file.to_str().unwrap()))?;
+        return Ok(ListGist::new(gists));
     }
-    return Err(Error::from("unsucess get list gist"));
-}
 
-pub fn print_list(gists: Vec<ResponseListGist>, verbose: bool) -> Result<()> {
-    let mut count = 0;
-    for gist in gists {
-        println!(
-            "{}) {}",
-            count,
-            gist.description.unwrap_or("None".to_owned()),
-        );
-        println!("{}", gist.id.blue().bold());
-        if verbose {
-            for (_, v) in gist.files {
-                println!("{}", v.raw_url.green());
-                println!("---------------------------------------------------------");
+    fn write(&self) -> Result<()> {
+        let path_file = utils::path_file_in_home(LIST_GIST_FILE_NAME).unwrap();
+        let list_string = serde_json::to_string(&self.list).chain_err(|| "can't get list")?;
+        return utils::write_file(path_file, list_string);
+    }
+
+    fn get_update_list_gist() -> Result<ListGist> {
+        let mut resp: Response = Client::new()
+            .get(URL)
+            .bearer_auth(&*TOKEN)
+            .send()
+            .chain_err(|| "failed get list")?;
+        if resp.status().is_success() {
+            let list_gist: Vec<ResponseGist> = resp.json().chain_err(|| "can't read gist list")?;
+            return Ok(ListGist::new(list_gist));
+        }
+        return Err(Error::from("unsuccessful get list gist"));
+    }
+
+    pub fn sync() -> Result<ListGist> {
+        let list_gist = ListGist::get_update_list_gist().unwrap();
+        list_gist.write().unwrap();        
+        Ok(list_gist)
+    }
+
+    pub fn _search_url_gist<T: AsRef<str>>(&self, id: T) -> Result<String> {
+        if id.as_ref().len() < 5 {
+            return Err(Error::from("id invalid"));
+        }
+        for gist in self.list.clone() {
+            if gist.id.starts_with(id.as_ref()) {
+                return Ok(gist.url);
             }
         }
-        count += 1;
+        return Err(Error::from("gist file not exist"));
     }
-    Ok(())
+
+    pub fn search_raw_url_gist<T: AsRef<str>>(&self, id: T) -> Result<String> {
+        if id.as_ref().len() < 5 {
+            return Err(Error::from("id len most be bigger than 5"));
+        }
+        for gist in self.list.clone() {
+            if gist.id.starts_with(id.as_ref()) {
+                for (_, v) in gist.files {
+                    return Ok(v.raw_url);
+                }
+            }
+        }
+        return Err(Error::from("gist not exist"));
+    }
+
+    pub fn get_name_gist_file<T: AsRef<str>>(&self, id: T) -> Result<String> {
+        for gist in self.list.clone() {
+            if gist.id == id.as_ref() {
+                for (_, v) in gist.files {
+                    return Ok(v.name);
+                }
+            }
+        }
+        return Err(Error::from("id not exist"));
+    }
+
+    pub fn print(&self, verbose: bool) -> Result<()> {
+        let mut count = 0;
+        for gist in self.list.clone() {
+            println!(
+                "{}) {}",
+                count,
+                gist.desc.unwrap_or("None Description".to_owned()),
+            );
+            println!("{}", gist.id.blue().bold());
+            if verbose {
+                for (_, v) in gist.files {
+                    println!("{}", v.raw_url.green());
+                    println!("---------------------------------------------------------");
+                }
+            }
+            count += 1;
+        }
+        Ok(())
+    }
 }
